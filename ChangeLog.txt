@@ -1,0 +1,78 @@
+Change Log
+
+Current Versions
+
+Beholder V1.03.001
+
+* ElasticSearch: 1.7.2
+* Logstash: 1.5.4
+* Kibana: 4.1.2
+* Bro: 2.4.1
+
+Feature Changes
+
+* Ubuntu 15 is now supported.
+	* Script will check your Ubuntu version and install necessary extra packages to get init running.
+* INIT
+	* "Stoping" is now "stopping"... Yay!
+
+Beholder V1.03.000
+
+Current Versions
+
+* ElasticSearch: 1.7.2 - Updated
+* Logstash: 1.5.4
+* Kibana: 4.1.2 - Updated
+* Bro: 2.4.1 - Updated
+
+Beholder V1.02.000
+
+Current Versions
+
+* ElasticSearch: 1.7.1 - Updated
+* Logstash: 1.5.4 - Updated
+* Kibana: 4.1.1
+* Bro: 2.4
+
+Feature Changes
+
+* Cron
+	* Fixed an issue with curator running from cron.
+
+Beholder V1.01.000
+
+Current Versions
+
+* ElasticSearch: 1.7.0 - Updated
+* Logstash: 1.5.3 - Updated
+* Kibana: 4.1.1
+* Bro: 2.4
+
+Feature Changes
+
+* Elasticsearch
+	* Curator
+		* Added "--prefix bro" to the cronjob so that custom indices will not be caught.
+
+Beholder V1.00.001
+
+Current Versions
+
+* ElasticSearch: 1.6.0
+* Logstash: 1.5.2
+* Kibana: 4.1.1
+* Bro: 2.4
+
+Feature Changes
+
+* Elasticsearch
+	* Added Integer type fields for the duration and bytes fields from Bro. 
+	
+* Kibana
+	* Because of the change in field types, SUM/Min/Max for Kibana dashboards can now properly function against the bytes and duration field.
+
+Bug Fix
+
+* Bro
+	* Unable to compile Git code
+		* Changed from getting Bro from git to pulling from their website.
