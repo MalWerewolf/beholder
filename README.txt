@@ -1,8 +1,8 @@
-﻿############################################
-#Beholder v1.03.001 - ELK/BRO/Libtrace
+############################################
+#Beholder V1.04.001 - ELK/BRO/Libtrace
 #Created By: Destruct_Icon
 #Problems or Feature Requests?
-#E-mail Us: destruct_icon@malwerewolf.com
+#E-mail: destruct_icon@malwerewolf.com
 ############################################
 
 Beholder is a shell script which installs and configures essentials to peer into your network activity. Monitor your network traffic with Bro IDS, build dashboards with Kibana to get a visual representation of your activity and obtain packet captures of the identified events with Tracesplit.
@@ -30,7 +30,8 @@ Beholder is a shell script which installs and configures essentials to peer into
 '''Installation'''
 
 * Run the beholder script. Don't forget to sudo!
-* When prompted, enter the interface that you would like to monitor.
+* Enter a password for the "beholder" user.
+* Enter the interface that you would like to monitor.
 * At completion, reboot the system.
 
 '''Details'''
