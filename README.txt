@@ -1,6 +1,6 @@
-############################################
-#Beholder V1.04.001 - ELK/BRO/Libtrace
-#Created By: Destruct_Icon
+﻿############################################
+#Beholder V1.05.000 - ELK/BRO/Libtrace
+#Created By: Destruct_Icon and CP
 #Problems or Feature Requests?
 #E-mail: destruct_icon@malwerewolf.com
 ############################################
