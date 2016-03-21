@@ -1,6 +1,6 @@
 #!/bin/bash
 ############################################
-#Beholder V1.05.000 - ELK/BRO/Libtrace
+#Beholder V1.06.000 - ELK/BRO/Libtrace
 #Created By: Destruct_Icon and CP
 #Problems or Feature Requests?
 #E-mail: destruct_icon@malwerewolf.com
@@ -49,7 +49,7 @@ clear
 #Creating Beholder User
 #######################
 echo "[+] Creating beholder user. Prepare to create a password."
-useradd beholder
+useradd beholder -m -d /home/beholder
 adduser beholder sudo
 passwd beholder
 #####################
@@ -63,6 +63,8 @@ mkdir /logs/index
 mkdir /logs/bro/spool
 mkdir /logs/logstash
 mkdir /pcaps/
+mkdir /home/beholder
+chown beholder:beholder /home/beholder
 #####################################
 #Installing Updates and Dependencies.
 #####################################
@@ -79,15 +81,15 @@ apt-get install -y unzip bless lsb-core cmake make gcc g++ flex bison libpcap-de
 #####################
 echo "[+] Installing ELK Stack"
 cd /opt/
-wget https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.1.1/elasticsearch-2.1.1.tar.gz
+wget https://www.dropbox.com/s/r27jwgo13d0hnga/elasticsearch-2.2.1.tar.gz
 tar -zxvf *.tar.gz
 rm -rf *.tar.gz
 mv elastic* elasticsearch
-wget https://download.elastic.co/logstash/logstash/logstash-2.1.1.tar.gz
+wget https://www.dropbox.com/s/gz4txuatpcl5sbh/logstash-2.2.2.tar.gz
 tar -zxvf *.tar.gz
 rm -rf *.tar.gz
 mv logstash* logstash
-wget https://download.elastic.co/kibana/kibana/kibana-4.3.1-linux-x64.tar.gz
+wget https://www.dropbox.com/s/pv9xj6dl2sa8mk8/kibana-4.4.2-linux-x64.tar.gz
 tar -zxvf *.tar.gz
 rm -rf *.tar.gz
 mv kibana-* kibana
@@ -369,9 +371,9 @@ logstash_conf="/opt/logstash/config/bro.conf"
 logstash_log="/logs/logstash/$name.log"
 pid_file="/var/run/$name.pid"
 NICE_LEVEL="-n 19"
+HOME=/home/beholder
 start () {
     command="/usr/bin/nice ${NICE_LEVEL} ${logstash_bin} agent -f $logstash_conf --log ${logstash_log} -- web"
-
     log_daemon_msg "Starting $name"
     if start-stop-daemon --start --chuid "beholder" --quiet --oknodo --pidfile "$pid_file" -b -m --exec $command; then
         log_end_msg 0
@@ -384,7 +386,6 @@ stop () {
     start-stop-daemon --stop --quiet --oknodo --pidfile "$pid_file"
     echo "$name stopped"
 }
-
 status () {
     status_of_proc -p $pid_file "" "$name"
 }
@@ -428,7 +429,6 @@ pid_file="/var/run/$name.pid"
 NICE_LEVEL="-n 19"
 start () {
     command="/usr/bin/nice ${NICE_LEVEL} ${elastic}"
-
     log_daemon_msg "Starting $mode" "$name"
     if start-stop-daemon --start --chuid "beholder" --quiet --oknodo --pidfile "$pid_file" -b -m --exec $command; then
         log_end_msg 0
@@ -441,7 +441,6 @@ stop () {
     start-stop-daemon --stop --quiet --oknodo --pidfile "$pid_file"
     echo "$name stopped"
 }
-
 status () {
     status_of_proc -p $pid_file "" "$name"
 }
@@ -485,7 +484,6 @@ pid_file="/var/run/$name.pid"
 NICE_LEVEL="-n 19"
 start () {
     command="/usr/bin/nice ${NICE_LEVEL} ${kibana}"
-
     log_daemon_msg "Starting $mode" "$name"
     if start-stop-daemon --start --chuid "beholder" --quiet --oknodo --pidfile "$pid_file" -b -m --exec $command; then
         log_end_msg 0
@@ -498,7 +496,6 @@ stop () {
     start-stop-daemon --stop --quiet --oknodo --pidfile "$pid_file"
     echo "$name stopped"
 }
-
 status () {
     status_of_proc -p $pid_file "" "$name"
 }
@@ -546,6 +543,10 @@ rm -rf cron
 ######################
 chown -R beholder:beholder /logs
 chown -R beholder:beholder /opt
+######################
+#Clearing Certificates
+######################
+update-ca-certificates -f
 #########
 #Finished
 #########
