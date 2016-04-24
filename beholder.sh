@@ -1,9 +1,9 @@
 #!/bin/bash
 ############################################
-#Beholder V1.06.000 - ELK/BRO/Libtrace
+#Beholder V1.07.000 - ELK/BRO/Libtrace
 #Created By: Destruct_Icon and CP
 #Problems or Feature Requests?
-#E-mail: destruct_icon@malwerewolf.com
+#E-mail Us: destruct_icon@malwerewolf.com
 ############################################
 clear
 dt() {
@@ -48,10 +48,9 @@ clear
 #######################
 #Creating Beholder User
 #######################
-echo "[+] Creating beholder user. Prepare to create a password."
+echo "[+] Creating beholder user."
 useradd beholder -m -d /home/beholder
-adduser beholder sudo
-passwd beholder
+echo 'beholder:beholder' | chpasswd
 #####################
 #Build File Structure
 #####################
@@ -75,7 +74,7 @@ cat <<EOF > curator.list
 deb http://packages.elasticsearch.org/curator/3/debian stable main
 EOF
 apt-get update
-apt-get install -y unzip bless lsb-core cmake make gcc g++ flex bison libpcap-dev libssl-dev python-dev swig zlib1g-dev git dh-autoreconf python-elasticsearch-curator
+apt-get install -y apache2 apache2-utils unzip bless lsb-core cmake make gcc g++ flex bison libpcap-dev libssl-dev python-dev swig zlib1g-dev git dh-autoreconf python-elasticsearch-curator
 #####################
 #Installing ELK Stack
 #####################
@@ -374,6 +373,7 @@ NICE_LEVEL="-n 19"
 HOME=/home/beholder
 start () {
     command="/usr/bin/nice ${NICE_LEVEL} ${logstash_bin} agent -f $logstash_conf --log ${logstash_log} -- web"
+
     log_daemon_msg "Starting $name"
     if start-stop-daemon --start --chuid "beholder" --quiet --oknodo --pidfile "$pid_file" -b -m --exec $command; then
         log_end_msg 0
@@ -386,6 +386,7 @@ stop () {
     start-stop-daemon --stop --quiet --oknodo --pidfile "$pid_file"
     echo "$name stopped"
 }
+
 status () {
     status_of_proc -p $pid_file "" "$name"
 }
@@ -429,6 +430,7 @@ pid_file="/var/run/$name.pid"
 NICE_LEVEL="-n 19"
 start () {
     command="/usr/bin/nice ${NICE_LEVEL} ${elastic}"
+
     log_daemon_msg "Starting $mode" "$name"
     if start-stop-daemon --start --chuid "beholder" --quiet --oknodo --pidfile "$pid_file" -b -m --exec $command; then
         log_end_msg 0
@@ -441,6 +443,7 @@ stop () {
     start-stop-daemon --stop --quiet --oknodo --pidfile "$pid_file"
     echo "$name stopped"
 }
+
 status () {
     status_of_proc -p $pid_file "" "$name"
 }
@@ -484,6 +487,7 @@ pid_file="/var/run/$name.pid"
 NICE_LEVEL="-n 19"
 start () {
     command="/usr/bin/nice ${NICE_LEVEL} ${kibana}"
+
     log_daemon_msg "Starting $mode" "$name"
     if start-stop-daemon --start --chuid "beholder" --quiet --oknodo --pidfile "$pid_file" -b -m --exec $command; then
         log_end_msg 0
@@ -496,6 +500,7 @@ stop () {
     start-stop-daemon --stop --quiet --oknodo --pidfile "$pid_file"
     echo "$name stopped"
 }
+
 status () {
     status_of_proc -p $pid_file "" "$name"
 }
@@ -547,8 +552,82 @@ chown -R beholder:beholder /opt
 #Clearing Certificates
 ######################
 update-ca-certificates -f
+###################
+#Apache - a2e Setup
+###################
+echo "[+] Setting up Apache."
+a2enmod proxy proxy_http ssl
+##################################
+#Apache - Creating Basic Auth User
+##################################
+htpasswd -cbm /etc/apache2/.htpasswd beholder beholder
+###################################
+#Apache - Creating self-signed cert
+###################################
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -subj "/C=DD/ST=Guarding/L=Caverns/O=beholder/CN=beholder" -keyout /etc/ssl/certs/beholder.key -out /etc/ssl/certs/beholder.crt
+################################
+#Apache - A2E Enable and Disable
+################################
+a2ensite default-ssl
+a2dissite 000-default
+########################
+#Apache - Port Listening
+########################
+cat <<EOF > /etc/apache2/ports.conf
+Listen 443
+EOF
+#########################
+#Apache - Sites-Available
+#########################
+cat <<EOF > /etc/apache2/sites-available/default-ssl.conf
+<IfModule mod_ssl.c>
+        <VirtualHost *:443>
+                ServerAdmin webmaster@localhost
+                <Proxy *>
+                Order deny,allow
+                Allow from all
+                AuthType Basic
+                AuthName "Access Kibana"
+                AuthUserFile /etc/apache2/.htpasswd
+                Require valid-user
+                </Proxy>
+                ProxyPass / http://localhost:5601/
+                ProxyPassReverse / http://localhost:5601/
+                SSLEngine on
+                SSLCertificateFile      /etc/ssl/certs/beholder.crt
+                SSLCertificateKeyFile   /etc/ssl/certs/beholder.key
+                <FilesMatch "\.(cgi|shtml|phtml|php)$">
+                                SSLOptions +StdEnvVars
+                </FilesMatch>
+                <Directory /usr/lib/cgi-bin>
+                                SSLOptions +StdEnvVars
+                </Directory>
+                BrowserMatch "MSIE [2-6]" \
+                                nokeepalive ssl-unclean-shutdown \
+                                downgrade-1.0 force-response-1.0
+                # MSIE 7 and newer should be able to use keepalive
+                BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
+        </VirtualHost>
+</IfModule>
+EOF
+#############
+#Firewall Fix
+#############
+echo "[+] Configuring the firewall."
+ufw deny 5601
+ufw default allow
+ufw enable
 #########
 #Finished
 #########
 clear
-echo 'Your installation has finished. We recommend rebooting your system.'
+echo 'Your installation has finished. We are rebooting your system.'
+seconds=10
+while [ $seconds -gt 0 ];
+        do
+                echo "$seconds"
+                sleep 1s
+                seconds=$(($seconds - 1))
+        done
+echo 'VGhhbmsgeW91IGZvciB0cnlpbmcgdGhlIEJlaG9sZGVyIHNjcmlwdCEgVGhlIHBhbmNha2VzIGFyZSBub3QgYSBsaWUu'
+shutdown -r now
